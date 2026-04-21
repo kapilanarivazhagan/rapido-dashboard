@@ -7,7 +7,7 @@ BASE_KPI_KEYS = (
     "orders",
     "avg_orders",
     "missed",
-    "drivers"
+    "active_pct"
 )
 
 
@@ -48,8 +48,10 @@ def calculate_kpis(df):
     gmv = df["GMV"].sum()
 
     # ---- DRIVERS REPORTED (active = GMV > 0) ----
-    drivers = df[df["GMV"] > 0]["Mobile"].nunique()
-    driver_count = max(drivers, 1)
+    total_drivers = df["Mobile"].nunique()
+    active_drivers = df[df["GMV"] > 0]["Mobile"].nunique()
+    active_pct = (active_drivers / total_drivers * 100) if total_drivers else 0
+    driver_count = max(active_drivers, 1)
 
     # ---- AVG EARNINGS ----
     avg_earnings = _safe_div(gmv, driver_count)
@@ -76,7 +78,8 @@ def calculate_kpis(df):
         "orders":      int(orders),
         "avg_orders":  int(round(avg_orders, 0)),
         "missed":      missed,
-        "drivers":     int(drivers),
+        "active_riders": int(active_drivers),
+        "active_pct":  round(active_pct)
     }
 
 
@@ -125,11 +128,29 @@ def city_metrics(df):
     available = {k: v for k, v in agg_dict.items() if k in df.columns}
     city_df = df.groupby("City").agg(available).reset_index()
 
-    # Drivers Reported = unique Mobile where GMV > 0
+    # Compute total drivers:
+    total = df.groupby("City")["Mobile"].nunique().reset_index()
+    total.rename(columns={"Mobile": "Total Drivers"}, inplace=True)
+
+    # Compute active riders:
     active = df[df["GMV"] > 0].groupby("City")["Mobile"].nunique().reset_index()
-    active.rename(columns={"Mobile": "Drivers Reported"}, inplace=True)
+    active.rename(columns={"Mobile": "Active Riders"}, inplace=True)
+
+    # Merge into city_df:
+    city_df = city_df.merge(total, on="City", how="left")
     city_df = city_df.merge(active, on="City", how="left")
-    city_df["Drivers Reported"] = city_df["Drivers Reported"].fillna(0).astype(int)
+
+    # Fill nulls:
+    city_df["Active Riders"] = city_df["Active Riders"].fillna(0)
+    city_df["Total Drivers"] = city_df["Total Drivers"].fillna(0)
+
+    # Calculate %:
+    city_df["Active %"] = (
+        city_df["Active Riders"] / city_df["Total Drivers"].replace(0, 1) * 100
+    ).round(0).fillna(0)
+
+    # Alias for downstream calculations
+    city_df["Drivers Reported"] = city_df["Active Riders"].astype(int)
 
     # Derived
     driver_count = city_df["Drivers Reported"].clip(lower=1)

@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 # -----------------------------
 # CONFIG
 # -----------------------------
-S3_BUCKET    = "rapido-dashboard-kavi"
+S3_BUCKET    = "revenue-report-kavi"
 BASE_S3_URL  = f"https://{S3_BUCKET}.s3.amazonaws.com"
 
 REPORT_FILE  = "rapido_report.html"
@@ -116,8 +116,6 @@ if generate:
     date_str = report_date.strftime("%d %B")
 
     caption = f"""Rapido Revenue Report - {date_str}
-
-
 
 Full Report:
 {html_url}

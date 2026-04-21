@@ -133,11 +133,14 @@ def generate_html(report_data, date):
         completion   = float(row.get("completion_pct", 0) or 0)
         missed       = int(row.get("missed_orders", 0) or 0)
 
+        active_riders = int(row.get("Active Riders", 0) or 0)
+        active_pct    = int(row.get("Active %", 0) or 0)
+
         city_kpi[row["City"]] = {
             "earnings":          format_inr(earnings_raw),
             "orders":            orders_raw,
             "completion":        int(round(completion)),
-            "drivers":           drivers,
+            "drivers":           f"{active_riders} ({active_pct}%)",
             "missed":            missed,
             "avg_earnings":      format_inr(earnings_raw / driver_count),
             "avg_orders":        int((row.get("Net Orders", 0) or 0) / driver_count),
@@ -147,7 +150,7 @@ def generate_html(report_data, date):
             "orders_change":     float(row.get("orders_change",     0) or 0),
             "orders_change_abs": int(row.get("orders_change_abs",   0) or 0),
             "avg_orders_change": float(row.get("avg_orders_change", 0) or 0),
-            "drivers_change":    float(row.get("drivers_change",    0) or 0),
+            "active_pct_change": float(row.get("active_pct_change", 0) or 0),
             "missed_change":     float(row.get("missed_change",     0) or 0),
         }
 
@@ -216,7 +219,7 @@ def generate_html(report_data, date):
     e_val   = format_inr(kpis['earnings'])
     ae_val  = format_inr(kpis['avg_earnings'])
     c_val   = f"{int(kpis['completion'])}%"
-    d_val   = int(kpis['drivers'])
+    d_val   = f"{int(kpis.get('active_riders', 0))} ({int(kpis.get('active_pct', 0))}%)"
     o_val   = int(kpis['orders'])
     ao_val  = int(kpis['avg_orders'])
     m_val   = int(kpis['missed'])
@@ -224,7 +227,7 @@ def generate_html(report_data, date):
     e_chg   = kpis['earnings_change']
     ae_chg  = kpis.get('avg_earnings_change', 0)
     c_chg   = kpis['completion_change']
-    d_chg   = kpis['drivers_change']
+    d_chg   = kpis.get('active_pct_change', 0)
     o_chg   = kpis['orders_change']
     ao_chg  = kpis.get('avg_orders_change', 0)
     m_chg   = kpis['missed_change']
@@ -834,7 +837,7 @@ def generate_html(report_data, date):
         setKpi("earnings",    city === "all" ? "{e_val}"  : d.earnings,    city === "all" ? {e_chg}  : d.earnings_change,   "earnings");
         setKpi("avg_earnings",city === "all" ? "{ae_val}" : d.avg_earnings, city === "all" ? {ae_chg} : d.avg_earnings_change, "avg_earnings");
         setKpi("completion",  city === "all" ? "{c_val}"  : d.completion + "%", city === "all" ? {c_chg}  : d.completion_change,  "completion");
-        setKpi("drivers",     city === "all" ? "{d_val}"  : d.drivers,     city === "all" ? {d_chg}  : d.drivers_change,    "drivers");
+        setKpi("drivers",     city === "all" ? "{d_val}"  : d.drivers,     city === "all" ? {d_chg}  : d.active_pct_change,    "drivers");
         setKpi("orders",      city === "all" ? "{o_val}"  : d.orders,      city === "all" ? {o_chg}  : d.orders_change,     "orders");
         setKpi("avg_orders",  city === "all" ? "{ao_val}" : d.avg_orders,  city === "all" ? {ao_chg} : d.avg_orders_change, "avg_orders");
         setKpi("missed",      city === "all" ? "{m_val}"  : d.missed,      city === "all" ? {m_chg}  : d.missed_change,     "missed");
@@ -1047,7 +1050,7 @@ def generate_html(report_data, date):
                             </div>
 
                             <div class="kpi-card drivers">
-                                <span class="label">Drivers Reported</span>
+                                <span class="label">Active Riders</span>
                                 <span class="value" id="drivers">{d_val}</span>
                                 <span class="{change_class(d_chg, 'drivers')}" id="drivers_change">{fmt_change(d_chg, 'drivers')}</span>
                             </div>
