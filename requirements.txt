@@ -1,0 +1,10 @@
+pandas
+numpy
+pillow
+imgkit
+selenium
+boto3
+gspread
+oauth2client
+python-dotenv
+openai
